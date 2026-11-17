@@ -1,0 +1,12 @@
+{
+  "name": "review-method",
+  "description": "The review-method plugin for Claude Code.",
+  "owner": { "name": "Bertrand Hurst" },
+  "plugins": [
+    {
+      "name": "review-method",
+      "source": "./",
+      "description": "Runs the reviews of a change before its merge: fresh agents that see the code, not the author's view, findings tagged with a proof, a depth set by risk, and a clear point where the reviews stop."
+    }
+  ]
+}
