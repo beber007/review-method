@@ -1,12 +1,16 @@
-# The reviews before a merge
+# Review instructions
+
+The first four sections are for each review. The last three are for the plugin
+[`review-method`](https://github.com/beber007/review-method).
 
 <!-- One page at most. Each line here should come from a real fault of this
-repository: a revert, a fix, an incident, an issue. Delete the comments once done. -->
+repository: a revert, a fix, an incident, an issue. Delete the comments once done.
 
-The reviews of this repository follow the method of the plugin `review-method`. This
-file holds what is local.
+The first four sections follow the format of the Code Review service of Anthropic,
+which reads this file. The local /code-review reads it too, once CLAUDE.md holds the
+line @REVIEW.md. -->
 
-## What failure looks like here
+## What Important means here
 
 <!-- The faults that have cost this repository, each in one line, with its issue or
 commit when there is one. Examples of the kind:
@@ -14,25 +18,49 @@ commit when there is one. Examples of the kind:
 - A text that lies: a figure not checked against the code.
 - A tool or a CI job that now skips, without a word, what it ran before. -->
 
+Important means a wrong behaviour, or a false statement. Here, that is above all:
+
+-
+
+Style, naming and rewording are Nit at most.
+
+## Cap the nits
+
+Report at most five Nits per review.
+
+## Do not report
+
+<!-- Generated files, vendored code, lock files, what the CI already checks. -->
+
+-
+
+## Always check
+
+<!-- The rules a review must check on every change, such as "each new route has a
+test". Keep the ones the history shows are missed. -->
+
 -
 
 ## How deep, by risk
 
-<!-- The paths or kinds of change of each tier. A change that touches two tiers takes
-the deeper one. -->
+<!-- For the plugin review-method. The paths or kinds of change of each tier. A
+change that touches two tiers takes the deeper one. -->
 
-- **Deep**, three reviewers:
-- **Standard**, one reviewer: anything else.
-- **Documentation alone**: one full review, then one review of its fixes.
+- **Deep**, three runs of the review:
+- **Standard**, one run: anything else.
+- **Documentation alone**: one run, then one run on its fixes.
 
-## What to skip
+## Commands a review may run
 
-<!-- Generated files, vendored code, lock files: what a reviewer need not read. -->
+<!-- For the plugin review-method. The commands a run of /code-review may use, as
+rules of --allowedTools, such as "Bash(make:*)". Reading the code and git are always
+allowed. -->
 
 -
 
-## Checks that come before the reviews
+## Checks before the reviews
 
-<!-- The commands that must pass before a review starts: tests, build, lint. -->
+<!-- For the plugin review-method. The commands that must pass before a review
+starts: tests, build, lint. -->
 
 -

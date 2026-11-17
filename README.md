@@ -15,19 +15,22 @@ until a review finds nothing. On a real repository, two things went wrong.
 
 ## The method
 
-- **A reviewer sees the code, not the author's view.** It gets the issue, the diff,
-  the pull request's text and the repository's rules. Nothing else.
-- **Each finding has a tag.** Important: a wrong behaviour or a false statement. Nit:
-  style. Pre-existing: there before the change, so it goes to an issue.
-- **Each finding has a proof.** A file, a line, and a concrete case that goes wrong.
-- **The depth follows the risk.** Three reviewers for the code that costs most when it
-  breaks, one for the rest, a lighter review for documentation alone.
-- **A fresh agent checks each Important finding** before it is fixed. A wrong one is
-  dropped.
+- **The reviewer is `/code-review`**, the review built into Claude Code. Each run is a
+  new session, started in the repository. It does not see the author's conversation,
+  so it does not get the author's view.
+- **The depth follows the risk.** Three runs for the code that costs most when it
+  breaks, one for the rest. Two runs on the same diff find different things, and
+  their union finds more.
+- **A fresh agent checks each finding.** It needs a concrete case that goes wrong, or
+  it is dropped. The agent tags each finding that holds. Important: a wrong behaviour
+  or a false statement. Nit: style. Pre-existing: there before the change, so it goes
+  to an issue.
+- **Another fresh agent reads what the runs miss**, without their findings: the texts
+  against the code, the tools and the CI, and the change against its issue.
 - **The reviews stop** at the first full review with nothing Important, once its nits
-  are fixed and a review of those fixes has read them. After three full reviews in a
-  row with something Important, the agent stops and asks the user whether the approach
-  is right.
+  are fixed and a run on those fixes has read them. After three full reviews in a row
+  with something Important, the agent stops and asks the user whether the approach is
+  right.
 - **The agreement to merge covers one commit.** A new commit needs a new agreement.
 
 The skill, [`skills/review/SKILL.md`](skills/review/SKILL.md), holds the method step by
@@ -37,12 +40,23 @@ step.
 
 The method needs to know what failure looks like in your repository. Put a
 `REVIEW.md` at its root, from
-[`skills/review/REVIEW-template.md`](skills/review/REVIEW-template.md). Keep it to a
-page. Fill it from real faults: reverts, fixes, incidents. A list of generic risks
-helps less.
+[`skills/review/REVIEW-template.md`](skills/review/REVIEW-template.md). It follows the
+format that the Code Review service of Anthropic reads. Keep it to a page. Fill it from
+real faults: reverts, fixes, incidents. A list of generic risks helps less.
+
+The local `/code-review` reads `CLAUDE.md`, not `REVIEW.md`. So add this line, alone,
+to your `CLAUDE.md`:
+
+```
+@REVIEW.md
+```
 
 [`examples/escapement-REVIEW.md`](examples/escapement-REVIEW.md) is one filled in, for
-a small real-time operating system.
+a small real-time operating system. On 17 November 2026, we ran `/code-review` again on
+an old change of that repository, [commit
+`98d8051`](https://github.com/beber007/escapement/commit/98d8051). Without this file,
+three runs missed both faults the change had brought. With it, three runs together found
+both.
 
 ## Install
 

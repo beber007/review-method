@@ -1,6 +1,6 @@
 ---
 name: review
-description: Run the reviews of a pull request or a branch before its merge, until a clear point where they stop. Fresh agents see the code, not the author's view; each finding is tagged Important, Nit or Pre-existing, with a proof; the depth follows the risk set in the repository's REVIEW.md. Use when the user asks to run the reviews before a merge, or to write a REVIEW.md.
+description: Run the reviews of a pull request or a branch before its merge, until a clear point where they stop. Each review is a run of the built-in /code-review, more than one where the risk calls for it; each finding is checked, tagged Important, Nit or Pre-existing, and fixed or sent to an issue. The depth follows the risk set in the repository's REVIEW.md. Use when the user asks to run the reviews before a merge, or to write a REVIEW.md.
 ---
 
 # Reviews before a merge
@@ -14,12 +14,22 @@ ways:
 - A reviewer told what an earlier review found, or that the change is sound, tends to
   agree.
 
-The method is the same in every repository. What failure looks like differs: each
-repository says it in a file `REVIEW.md` at its root.
+The reviewer is the review built into Claude Code, `/code-review`. Each run is a new
+session of Claude Code, started in the repository. It does not see this conversation,
+so it does not get the author's view. This method decides how many runs to make,
+checks what they find, and says when to stop.
+
+One run is not enough on code that costs a lot when it breaks. Two runs on the same
+diff find different things. Their union finds more than either.
 
 ## 0. Read REVIEW.md, and run the checks
 
-Read `REVIEW.md` at the root of the repository, and `CLAUDE.md` if there is one.
+Read `REVIEW.md` and `CLAUDE.md` at the root of the repository.
+
+`REVIEW.md` is the file that the Code Review service of Anthropic reads. The local
+`/code-review` reads `CLAUDE.md`, not `REVIEW.md`. So the `CLAUDE.md` at the root of
+the repository must hold a line `@REVIEW.md`, alone on its line, which brings the file
+in. If that line or that file is missing, say so, and offer to add it.
 
 If `REVIEW.md` is missing, say so. Offer to write one from
 `${CLAUDE_SKILL_DIR}/REVIEW-template.md`, filled from the repository's history: its
@@ -27,73 +37,117 @@ reverts, its fixes, its issues. Do not invent its failure cases: ask the user fo
 those you cannot find. Until it exists, every change that is not documentation alone
 takes the Deep tier.
 
-Run the checks that `REVIEW.md` lists under "Checks that come before the reviews",
-and show their output. If one fails, fix it, or tell the user, before any review
-starts.
+If `REVIEW.md` lacks a section of the template, for instance one written for an
+earlier version of this plugin, say which ones, and offer to add them.
+
+Run the commands of the section "Checks before the reviews", and show their output.
+If one fails, fix it, or tell the user, before any review starts.
 
 ## 1. Choose the tier
 
-`REVIEW.md` lists the paths or the kinds of change of each tier.
+The section "How deep, by risk" of `REVIEW.md` lists the paths or the kinds of change
+of each tier.
 
-- **Deep**: three reviewers in each full review, at once. Each looks at one side:
-  - the logic of the code;
-  - the facts that the texts state (comments, documentation, the pull request);
-  - the tools and the CI that build and test the code.
-- **Standard**: one reviewer in each full review.
-- **Documentation alone**: one full review, then one review of its fixes. Fix what
-  each one finds. Then stop.
+- **Deep**: three runs in each full review.
+- **Standard**: one run in each full review.
+- **Documentation alone**: one full review of one run, then one review of its fixes.
+  Fix what each one finds. Then stop.
 
 A change that touches two tiers takes the deeper one.
 
-## 2. Brief a full review
+## 2. Run a full review
 
-Start each reviewer as a fresh agent. Give it:
+Commit everything first, the change and each fix, and leave nothing uncommitted. A run
+reviews the range of commits it is given, but it reads the files as they are on disk.
 
-- the issue or the request the change answers;
-- how to get the whole diff (for instance `git diff origin/main...HEAD`);
-- the pull request's text, if there is one;
-- `CLAUDE.md` and `REVIEW.md`.
+A run is one call of `/code-review` in a new session, from the root of the
+repository:
 
-Do not give it your view of the change. Do not give it what an earlier review found.
+```sh
+claude -p "/code-review high --max-findings default TARGET" \
+    --allowedTools Read Grep Glob "Bash(git diff:*)" "Bash(git log:*)" \
+    "Bash(git show:*)" TOOLS --output-format text > OUT
+```
 
-Ask for a report that starts with the number of findings. Each finding gives a file
-and a line, a concrete case (what is given, what comes out wrong), and a tag:
+- `TARGET` is the whole change, as a range of local commits, such as
+  `origin/main...HEAD`.
+- `TOOLS` are those of the section "Commands a review may run" of `REVIEW.md`, such as
+  `"Bash(make:*)"`. Without them, a run can read the code but not run it.
+- `--max-findings default` undoes a limit set in an earlier run.
+- `OUT` is a file outside the repository, so that no report gets committed.
 
-- **Important**: a wrong behaviour, or a false statement.
-- **Nit**: style, wording, an unclear referent.
-- **Pre-existing**: not brought by the diff.
+A new session reads the `CLAUDE.md` of the directory it starts in, and so `REVIEW.md`.
+A call of the skill from your own session would read the `CLAUDE.md` of the directory
+your session started in, which may be another one.
 
-A finding without a concrete case is not one.
+A run takes minutes. Start it in the background, and wait until it ends before you
+read its file. Give the run nothing else: not your view of the change, not what an
+earlier review found. For the Deep tier, start the three runs at once, each with its
+own output file. If the runs may build, give each one its own worktree of the same
+commit, so that they do not write over each other's files.
 
-## 3. Check each Important finding
+## 3. Check the findings, and read what the runs miss
 
-Before fixing an Important finding, start one more fresh agent. Give it the finding
-and the code, and ask whether it holds. A finding it shows wrong is dropped, and does
-not count as found. Write the reason in the pull request, or tell the user if there
-is none.
+Merge the findings of the runs: two findings on the same fault are one.
+
+Then start two fresh agents at once. Give each the whole change (the range of the full
+review, even after a review of fixes), the issue the change answers, the pull
+request's text, `CLAUDE.md` and `REVIEW.md`. Give them nothing else: not your view of
+the change, nor of the findings.
+
+- **The first checks the findings**, if there are any. Give it the merged findings
+  too. With more than ten, share them out between several such agents. For each
+  finding, it checks whether it holds, by reading the code and running what it can.
+- **The second reads what the runs miss.** Give it no finding: a reviewer told what an
+  earlier one found tends to look no further. The runs look for faults in the code,
+  more than in the texts or the tools. So it reads each statement that the change adds
+  to a comment, a document or the pull request's text, against the code; each change
+  to a tool, a build file or the CI, for what it now skips or refuses; and whether the
+  change does what its issue asks.
+
+Each agent gives, for each fault, a concrete case: what is given, what comes out
+wrong. It tags it, as the section "What Important means here" of `REVIEW.md` says:
+
+- **Important**: a wrong behaviour, or a false statement;
+- **Nit**: style, wording, an unclear referent;
+- **Pre-existing**: not brought by the whole change.
+
+Once every agent is done, drop what "Do not report" covers. Keep no more Nits in all
+than "Cap the nits" allows: the ones with the clearest case first.
+
+Each Important fault that the second agent found goes to a third fresh agent, given
+the fault and the code, which checks whether it holds, as the first agent does.
+
+A finding an agent shows wrong is dropped, and does not count as found. A finding
+without a concrete case is dropped too. Write the reason in the pull request, or tell
+the user if there is none.
 
 ## 4. Fix
 
 - **Important**: fix it with its whole class, each other place of the same fault in
-  the diff. Where the repository has tests, write a test that fails on it first.
+  the change. Where the repository has tests, write a test that fails on it first.
 - **Nits**: fix them all together, in one commit.
 - **Pre-existing**: do not fix it here. Propose an issue to the user.
 
-Then:
+Commit each fix. Then:
 
-- For documentation alone: run one review of the fixes (step 5), whatever the full
-  review found.
+- For documentation alone, after its full review: run one review of the fixes (step
+  5), whatever the full review found.
 - If the full review found something Important: run a full review again (step 2).
 - If it found Nits only: run one review of those fixes alone (step 5).
 - If it found nothing: stop (step 6).
 
-## 5. Brief a review of fixes alone
+## 5. Run a review of fixes alone
 
-Start one fresh agent. Give it the diff of the fixes and the findings they fix. It
-checks each fix and what the fix changed around it, not the whole change again.
+Make one run (step 2) with the range of the fixes alone as `TARGET`, such as
+`abc1234..HEAD`, where `abc1234` is the last commit before them. Then start the first
+agent of step 3, without the second. Give it what the run found, the findings the
+fixes answer, and the range of the fixes. It checks each finding; that each fix
+removes its fault; and each statement the fixes add to a text, against the code. It
+still tags as Pre-existing only what the whole change did not bring.
 
-- If it finds something Important: check it (step 3) and fix it (step 4). Then run a
-  full review (step 2), except for documentation alone: it stops once the fix is made.
+- If it finds something Important: fix it (step 4). Then run a full review (step 2),
+  except for documentation alone: it stops once the fix is made, with no other review.
 - If it finds nothing Important: fix its Nits, and stop.
 
 ## 6. When to stop
