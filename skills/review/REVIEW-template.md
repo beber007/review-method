@@ -26,7 +26,8 @@ Style, naming and rewording are Nit at most.
 
 ## Cap the nits
 
-Report at most five Nits per review.
+Report at most five Nits per review, except for a change of documentation alone:
+there, report every one.
 
 ## Do not report
 
@@ -48,7 +49,8 @@ change that touches two tiers takes the deeper one. -->
 
 - **Deep**, three runs of the review:
 - **Standard**, one run: anything else.
-- **Documentation alone**: one run, then one run on its fixes.
+- **Documentation alone**, a change of Markdown files only: one run, then one run on
+  its fixes.
 
 ## Commands a review may run
 

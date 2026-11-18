@@ -1,7 +1,7 @@
 {
   "name": "review-method",
   "description": "Runs the reviews of a change before its merge: runs of the built-in /code-review, each finding checked and tagged with a proof, a depth set by risk, and a clear point where the reviews stop.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "Bertrand Hurst"
   },

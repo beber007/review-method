@@ -6,10 +6,11 @@ binary written to the board. Issue numbers link to that repository. -->
 # Review instructions
 
 The reviews of this repository follow the plugin
-[`review-method`](https://github.com/beber007/review-method): how many runs of
-`/code-review`, how each finding is checked and tagged, when the reviews stop.
-`CLAUDE.md` brings this file in, so that `/code-review` reads it. The first four
-sections are for each review. The last three are for the plugin.
+[`review-method`](https://github.com/beber007/review-method), at the version
+`.claude/settings.json` pins: how many runs of `/code-review`, how each finding is
+checked and tagged, when the reviews stop. `CLAUDE.md` brings this file in, so that
+`/code-review` reads it. The first four sections are for each review. The last three are
+for the plugin.
 
 ## What Important means here
 
@@ -30,7 +31,8 @@ Style, naming and rewording are Nit at most.
 
 ## Cap the nits
 
-Report at most five Nits per review.
+Report at most five Nits per review, except for a change of documentation alone:
+there, report every one, since its plain style is part of what it is reviewed for.
 
 ## Do not report
 
@@ -43,28 +45,38 @@ Report at most five Nits per review.
 - Each new value an option takes: is a value the code does not know refused ([#92](https://github.com/beber007/escapement/issues/92))?
 - Each change to one kernel or one port: do the others that share this code need it?
 - Each figure in a text: is it in the code, or in a measurement with its date?
+- A change of documentation alone: is the meaning kept, each number and each name
+  kept, and the style plain?
 
 ## How deep, by risk
 
-- **Deep**, three runs: the kernels, the ports to each chip, the drivers. The mutants
-  of the kernel lines changed too (`CLAUDE.md`, "Rules that do not change").
-- **Standard**, one run: anything else, such as the tools, the CI, the examples, the
-  Makefiles, the tests on the host and the tests under the Renode emulator.
-- **Documentation alone**: one run, then one run on its fixes (`CLAUDE.md`, "Rules
-  that do not change").
+- **Deep**, three runs: the kernels (`Escapement/*.c`, `Escapement/*.h`); the ports
+  and their drivers (`Escapement/CORTEX-Mx/` and `Escapement/RISC-V/`, but not their
+  `Examples/`); the tools that check the order of their stores
+  (`tools/check_order.py`, `tools/check_order_mutants.sh`); their models and litmus
+  tests (`test/model/`, `test/litmus/`); the Makefiles of the examples, which choose
+  what a build holds, and `tools/check_options.sh`, which checks them ([#84](https://github.com/beber007/escapement/issues/84), [#86](https://github.com/beber007/escapement/issues/86)). The
+  mutants of the kernel lines changed too (`CLAUDE.md`, "Rules that do not change").
+- **Standard**, one run: anything else, such as the other tools, the CI, the sources
+  of the examples, the tests on the host and the tests under the Renode emulator.
+- **Documentation alone**, a change of Markdown files only: one run, then one run on
+  its fixes. `CLAUDE.md`, "Rules that do not change", lists what else it needs.
 
 ## Commands a review may run
 
 - `"Bash(make:*)"`: build the examples, and run the tests on the host.
-- `"Bash(sh tools/check_options.sh)"`: check the options of the Makefiles.
+- `"Bash(git worktree add:*)"`, `"Bash(git worktree remove:*)"`: check `main` out
+  outside the repository, to build its images, then remove it.
 - `"Bash(arm-none-eabi-objcopy:*)"`, `"Bash(cmp:*)"`: compare two images.
+- `"Bash(sh tools/check_options.sh)"`, `"Bash(tools/check_order.py:*)"`,
+  `"Bash(python3 tools/check_order.py:*)"`, `"Bash(tools/check_order_mutants.sh:*)"`,
+  `"Bash(sh tools/check_order_mutants.sh:*)"`: check the options of the Makefiles, and
+  the order of the stores, called as `CLAUDE.md` or the CI writes them.
 
-No tool that reaches the bench: a run of endurance may hold its probes.
+A review runs no tool that reaches the bench: a run of endurance may hold its probes.
 
 ## Checks before the reviews
 
-- The list of `CLAUDE.md`, "Before a commit": the tests on the host, the models, the
-  static analysis, and every variant of every example built.
-- `sh tools/check_options.sh`.
-- A change meant to leave an image alone: `arm-none-eabi-objcopy -O binary` of each
-  image, compared with that of `main`.
+- Every check of `CLAUDE.md`, "Before a commit", and `sh tools/check_options.sh`. For
+  a change meant to leave an image alone, that list includes the comparison of its
+  images with those of `main`.

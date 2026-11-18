@@ -50,7 +50,8 @@ of each tier.
 
 - **Deep**: three runs in each full review.
 - **Standard**: one run in each full review.
-- **Documentation alone**: one full review of one run, then one review of its fixes.
+- **Documentation alone**, a change of the documentation and nothing else, as
+  `REVIEW.md` defines it: one full review of one run, then one review of its fixes.
   Fix what each one finds. Then stop.
 
 A change that touches two tiers takes the deeper one.
@@ -73,7 +74,8 @@ claude -p "/code-review high --max-findings default TARGET" \
   `origin/main...HEAD`.
 - `TOOLS` are those of the section "Commands a review may run" of `REVIEW.md`, such as
   `"Bash(make:*)"`. Without them, a run can read the code but not run it.
-- `--max-findings default` undoes a limit set in an earlier run.
+- `--max-findings default` undoes a limit set in an earlier run. For documentation
+  alone, pass `--max-findings all` instead: there, every Nit of style counts.
 - `OUT` is a file outside the repository, so that no report gets committed.
 
 A new session reads the `CLAUDE.md` of the directory it starts in, and so `REVIEW.md`.
@@ -113,7 +115,8 @@ wrong. It tags it, as the section "What Important means here" of `REVIEW.md` say
 - **Pre-existing**: not brought by the whole change.
 
 Once every agent is done, drop what "Do not report" covers. Keep no more Nits in all
-than "Cap the nits" allows: the ones with the clearest case first.
+than "Cap the nits" allows: the ones with the clearest case first. For documentation
+alone, keep them all, unless `REVIEW.md` caps them there too.
 
 Each Important fault that the second agent found goes to a third fresh agent, given
 the fault and the code, which checks whether it holds, as the first agent does.
