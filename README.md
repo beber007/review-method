@@ -37,6 +37,9 @@ until a review finds nothing. On a real repository, two things went wrong.
 - **The reviews cover one commit.** A new commit needs new reviews. Before a push, the
   agent stops at the report, and the user pushes. With a merge, the agent merges only
   with the user's agreement, given on that commit.
+- **A review of someone else's change changes nothing.** One pass in a separate
+  worktree, the findings checked as above, and a short summary of points, each with
+  a question the reviewer can take for their own comments.
 
 The skill, [`skills/review/SKILL.md`](skills/review/SKILL.md), holds the method step by
 step.

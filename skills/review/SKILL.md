@@ -1,6 +1,6 @@
 ---
 name: review
-description: Run the reviews of a pull request or a branch before its merge, or before its push, until a clear point where they stop. Each review is a run of the built-in /code-review, more than one where the risk calls for it, plus one run for each reviewer profile that REVIEW.md lists; each finding is checked, tagged Important, Nit or Pre-existing, and fixed or sent to an issue. The depth follows the risk set in the repository's REVIEW.md. Use when the user asks to run the reviews before a merge or a push, or to write a REVIEW.md.
+description: Run the reviews of a pull request or a branch before its merge, or before its push, until a clear point where they stop. Each review is a run of the built-in /code-review, more than one where the risk calls for it, plus one run for each reviewer profile that REVIEW.md lists; each finding is checked, tagged Important, Nit or Pre-existing, and fixed or sent to an issue. The depth follows the risk set in the repository's REVIEW.md. Use when the user asks to run the reviews before a merge or a push, to review someone else's pull request without changing it, or to write a REVIEW.md.
 ---
 
 # Reviews before a merge or a push
@@ -23,6 +23,9 @@ One run is not enough on code that costs a lot when it breaks. Two runs on the s
 diff find different things. Their union finds more than either.
 
 ## 0. Read REVIEW.md, and run the checks
+
+When the user reviews the change of someone else, go to step 8 now, whatever
+`REVIEW.md` says: it changes how the checks below run.
 
 Read `REVIEW.md` and `CLAUDE.md` at the root of the repository.
 
@@ -212,3 +215,45 @@ Do not push and do not merge: the user does. Stop at the report.
 
 Merge only with the user's agreement. That agreement covers the same commit, with the
 same two cases.
+
+## 8. Review only: the change of someone else
+
+The user reviews a pull request that someone else wrote, and wants points to write
+their own comments. Change nothing: no edit, no commit, no push, no build unless the
+user asks, and nothing written in the pull request. The author fixes the change, so
+steps 4 to 7 do not apply, and there is one pass only.
+
+1. Fetch, and add a detached worktree of the head of the pull request, outside the
+   user's working tree. Do not check out anything in the user's tree. When the head
+   of the pull request has no `CLAUDE.md` or no `REVIEW.md`, copy the user's file into
+   the worktree, so that the runs read it. When its `CLAUDE.md` has no line
+   `@REVIEW.md`, add the line to the copy in the worktree. When the pull request
+   changes one of them, keep its version and tell the user.
+2. Start every command and every run below from the root of the worktree: a run
+   reads the files on disk, and the user's tree holds other code. An agent starts
+   where this session started, so give each agent the path of the worktree, and tell
+   it to read the files there.
+3. Run the checks of "Checks before the reviews" that only read, such as a lint. A
+   failure is a finding, not something to fix.
+4. Start, at once: one run of `/code-review` (step 2), whatever the tier, unless the
+   user asks for more, and one run for each reviewer profile. `TARGET` is the range
+   of the pull request, from its merge base with its target branch. Give the runs no
+   command of `TOOLS` that builds, unless the user asks.
+5. Check the findings and read what the runs miss, as step 3 does, with the text of
+   the pull request. Tell the agents not to build. Keep only what an agent showed
+   with a concrete case. The reasons for a dropped finding go to the user, not to the
+   pull request.
+6. Give the user a short summary, in the user's language:
+   - Important, then Nit, within "Cap the nits". For each: the file and line, the case
+     in one or two sentences, and a short question in the language of the pull
+     request, in plain words, that the user can take or rewrite.
+   - Pre-existing, apart: not for this pull request.
+   - The points dropped, one line each with the reason, so that the user does not
+     raise them.
+   - The commit that was reviewed.
+7. Delete the copied files, and check with `git status` in the worktree that
+   nothing else is left. Then remove it with `git worktree remove`. If it holds files
+   that the review made, such as a cache, use `--force`; otherwise ask the user.
+
+If the author pushes new commits, run this step again on the range of the new
+commits, or on the whole pull request if its history was rewritten.

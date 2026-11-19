@@ -1,7 +1,7 @@
 {
   "name": "review-method",
-  "description": "Runs the reviews of a change before its merge or its push: runs of the built-in /code-review and of reviewer profiles, each finding checked and tagged with a proof, a depth set by risk, and a clear point where the reviews stop.",
-  "version": "0.3.1",
+  "description": "Runs the reviews of a change before its merge or its push: runs of the built-in /code-review and of reviewer profiles, each finding checked and tagged with a proof, a depth set by risk, and a clear point where the reviews stop. Also reviews the pull request of someone else without changing it.",
+  "version": "0.4.0",
   "author": {
     "name": "Bertrand Hurst"
   },

@@ -79,6 +79,8 @@ outside the repository: give its absolute path. Delete the section if there is n
 ## The end of the reviews
 
 <!-- For the plugin review-method. "With a merge": the agent merges, with the user's
-agreement. "Before a push": the agent stops at the report, and the user pushes. -->
+agreement. "Before a push": the agent stops at the report, and the user pushes. The
+review of someone else's pull request always ends with a summary, with no change
+made, whatever this section says. -->
 
 With a merge.
