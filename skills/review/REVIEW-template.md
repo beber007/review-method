@@ -1,6 +1,6 @@
 # Review instructions
 
-The first four sections are for each review. The last three are for the plugin
+The first four sections are for each review. The last five are for the plugin
 [`review-method`](https://github.com/beber007/review-method).
 
 <!-- One page at most. Each line here should come from a real fault of this
@@ -66,3 +66,19 @@ allowed. -->
 starts: tests, build, lint. -->
 
 -
+
+## Reviewer profiles
+
+<!-- For the plugin review-method. Optional. One file for each reviewer of the team
+whose reviews a run should follow: what they check, each point from a review they
+gave, with its issue. A file that names people or quotes internal reviews can stay
+outside the repository: give its absolute path. Delete the section if there is none. -->
+
+-
+
+## The end of the reviews
+
+<!-- For the plugin review-method. "With a merge": the agent merges, with the user's
+agreement. "Before a push": the agent stops at the report, and the user pushes. -->
+
+With a merge.

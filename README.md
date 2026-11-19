@@ -1,7 +1,7 @@
 # review-method
 
-A plugin for Claude Code. It runs the reviews of a change before it is merged, and
-stops them at a clear point.
+A plugin for Claude Code. It runs the reviews of a change before it is merged, or
+before it is pushed, and stops them at a clear point.
 
 ## The problem
 
@@ -31,7 +31,12 @@ until a review finds nothing. On a real repository, two things went wrong.
   are fixed and a run on those fixes has read them. After three full reviews in a row
   with something Important, the agent stops and asks the user whether the approach is
   right.
-- **The agreement to merge covers one commit.** A new commit needs a new agreement.
+- **Reviewer profiles add runs.** A profile says what one reviewer of the team checks,
+  from the reviews they gave. Each full review adds one run that reviews the change
+  as that reviewer would. Its findings are checked like the others.
+- **The reviews cover one commit.** A new commit needs new reviews. Before a push, the
+  agent stops at the report, and the user pushes. With a merge, the agent merges only
+  with the user's agreement, given on that commit.
 
 The skill, [`skills/review/SKILL.md`](skills/review/SKILL.md), holds the method step by
 step.
@@ -67,9 +72,9 @@ In Claude Code:
 /plugin install review-method@review-method
 ```
 
-Then ask Claude to run the reviews of a pull request before its merge, or type
-`/review-method:review`. A bare `/review` runs the review built into Claude Code, not
-this one.
+Then ask Claude to run the reviews of a pull request before its merge, or of a branch
+before its push, or type `/review-method:review`. A bare `/review` runs the review
+built into Claude Code, not this one.
 
 ## Where it comes from
 
