@@ -75,9 +75,15 @@ In Claude Code:
 /plugin install review-method@review-method
 ```
 
-Then ask Claude to run the reviews of a pull request before its merge, or of a branch
-before its push, or type `/review-method:review`. A bare `/review` runs the review
-built into Claude Code, not this one.
+Then type `/rv`, or `/review-method:rv` if another command already uses that name:
+
+- `/rv` reviews the current branch. Called again later, it asks whether the new
+  commits are fixes; for fixes, it reviews only what changed since the last review.
+- `/rv PROJ-123`, or `/rv <branch>`, finds that branch, local or remote. When someone
+  else wrote it, you get points for your own comments, with no change made.
+
+You can also ask in plain words, or type `/review-method:review`. A bare `/review`
+runs the review built into Claude Code, not this one.
 
 ## Where it comes from
 

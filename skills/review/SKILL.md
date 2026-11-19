@@ -22,6 +22,54 @@ checks what they find, and says when to stop.
 One run is not enough on code that costs a lot when it breaks. Two runs on the same
 diff find different things. Their union finds more than either.
 
+## What to review
+
+The user gives no argument, or one: an issue key such as `PROJ-123`, or a branch.
+The commit of the last review of a branch is kept in the ref
+`refs/review-method/<branch>`, where `<branch>` is the name without the remote, such
+as `feature/x` for `origin/feature/x`. The target branch is always taken on the
+remote, such as `origin/main`, after a fetch. A ref is shared by all the worktrees of the
+repository, takes a `/` in its name, and keeps the commit from the garbage collector.
+
+- **No argument**: the current branch, written by the user. If there are changes not
+  committed, ask the user to commit them first. In a detached `HEAD`, there is no
+  branch: run the full reviews, from step 0, and keep no ref. Else read the ref:
+  - No ref: run the full reviews, from step 0.
+  - `HEAD` is the commit of the ref: say that nothing changed since the last review,
+    and stop.
+  - `HEAD` descends from it: ask the user once whether the new commits only fix the
+    last review, or add new work. Fixes: run step 0, then a review of fixes alone
+    (step 5) on `<ref>..HEAD`, with the findings of the last review if this
+    conversation has them, else without. New work: run the full reviews.
+  - `HEAD` does not descend from it: compare the change of the branch then and now,
+    each from its merge base with the target branch, with
+    `git diff <base> <commit> | git patch-id --stable`, which ignores the line
+    numbers. The same patch id: the history was
+    cleaned, or the branch moved onto a newer target branch (step 7). Say that the
+    last review still covers it, move the ref to `HEAD`, and stop. The same merge base
+    but another diff: make a commit on top of the ref with the tree of `HEAD`
+    (`git commit-tree HEAD^{tree} -p <ref>`), write in its message how each commit
+    message changed, and keep it with the ref `refs/review-method-tmp/fixes`. Run a
+    review of fixes alone on `<ref>..<that commit>`, then delete that ref. The
+    review read the tree of `HEAD`, so the ref of the branch then moves to `HEAD`.
+    Another merge base and another diff: run the full reviews.
+- **An issue key or a branch**: fetch, then find the branch with
+  `git branch -a --list "*<argument>*"`. A local branch and its remote copy are one
+  branch: take the local one when it exists. If several branches still match, ask
+  the user which one. If none matches, say so and stop.
+  - The author: list the commits of the branch that the target branch does not hold,
+    with `git log --no-merges origin/<target>..<branch>`. If the user's
+    `git config user.email` is the author of each one, it is the user's branch: if it
+    is not the current branch, ask the user to check it out, then go on as with no
+    argument.
+  - Otherwise, it is the change of someone else: go to step 8, on the commits after
+    its ref if there is one and `<branch>` descends from it, else on the whole pull
+    request.
+
+At the end of the reviews, in every way they end (steps 7 and 8), set
+`refs/review-method/<branch>` to the commit that the last review read, never to a
+commit made for the review: `git update-ref refs/review-method/<branch> <commit>`.
+
 ## 0. Read REVIEW.md, and run the checks
 
 When the user reviews the change of someone else, go to step 8 now, whatever
@@ -209,7 +257,8 @@ Two cases do not:
 
 ### Before a push
 
-Do not push and do not merge: the user does. Stop at the report.
+Do not push and do not merge: the user does. Set the ref of the branch (see "What to
+review"), then stop at the report.
 
 ### With a merge
 
@@ -251,8 +300,9 @@ steps 4 to 7 do not apply, and there is one pass only.
    - The points dropped, one line each with the reason, so that the user does not
      raise them.
    - The commit that was reviewed.
-7. Delete the copied files, and check with `git status` in the worktree that
-   nothing else is left. Then remove it with `git worktree remove`. If it holds files
+7. Set the ref of the branch to the commit that was reviewed (see "What to
+   review"). This is not a change to the pull request. Delete the copied files, and
+   check with `git status` in the worktree that nothing else is left. Then remove it with `git worktree remove`. If it holds files
    that the review made, such as a cache, use `--force`; otherwise ask the user.
 
 If the author pushes new commits, run this step again on the range of the new
