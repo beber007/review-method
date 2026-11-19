@@ -49,8 +49,10 @@ until a review finds nothing. On a real repository, two things went wrong.
   worktree, the findings checked as above, and a short summary of points, each with
   a question the reviewer can take for their own comments.
 
-The skill, [`skills/review/SKILL.md`](skills/review/SKILL.md), holds the method step by
-step.
+The skill, [`skills/review/SKILL.md`](skills/review/SKILL.md), chooses what to review.
+The method, step by step, is in the files next to it: `own-branch.md` for your own
+branch, `review-only.md` for the change of someone else, and `runs.md` for the runs,
+the checks and the log.
 
 ## What each repository adds
 
