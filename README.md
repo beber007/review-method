@@ -31,6 +31,14 @@ until a review finds nothing. On a real repository, two things went wrong.
   are fixed and a run on those fixes has read them. After three full reviews in a row
   with something Important, the agent stops and asks the user whether the approach is
   right.
+- **The texts are read first.** Before the first full review, and before the full
+  reviews of new work, one agent checks each statement of the commit messages and
+  comments against the code, and another checks its findings. A false text found
+  late costs a full review more. Not for documentation alone, nor for the change of
+  someone else.
+- **A log says who found what.** Each finding is written with the runs that reported
+  it, in a file inside the git directory. After some reviews, it shows which runs
+  never find anything alone.
 - **Reviewer profiles add runs.** A profile says what one reviewer of the team checks,
   from the reviews they gave. Each full review adds one run that reviews the change
   as that reviewer would. Its findings are checked like the others.

@@ -111,6 +111,23 @@ of each tier.
 
 A change that touches two tiers takes the deeper one.
 
+### Before the first full review: the texts
+
+In the late reviews, most Important findings are often texts that the code does not
+keep: a commit message, a comment, a Kconfig help. Each one costs a full review more.
+So before the first full review of a change, and before the full reviews of new
+work (see "What to review"), start one fresh agent. It reads the commits that no pass
+read yet: the log (end of step 3) holds a line `texts` for each pass, with its
+commit. There is no such pass for documentation alone, nor in step 8, where the
+agent of step 3 that reads what the runs miss covers the texts. Give it the range, the commit messages, the text of the pull
+request if there is one, `CLAUDE.md` and `REVIEW.md`, and nothing else. It reads each
+statement that the change adds to a text, and checks it against the code: each
+figure, each name, each "always", "only" or "never", each claim on what another
+commit does. For each fault it gives the text, the code that contradicts it, and a
+tag, as step 3 does. Give its findings to a second fresh agent, which checks each one
+as the first agent of step 3 does: the author's reading is not a check. Fix what
+holds, as step 4 does, and commit. Then start the full review.
+
 ## 2. Run a full review
 
 Commit everything first, the change and each fix, and leave nothing uncommitted. A run
@@ -205,6 +222,35 @@ the fault and the code, which checks whether it holds, as the first agent does.
 A finding an agent shows wrong is dropped, and does not count as found. A finding
 without a concrete case is dropped too. Write the reason in the pull request, or tell
 the user if there is none.
+
+### The log of who found what
+
+After each check of findings (here, in step 5 and in step 8), and after the pass on
+the texts, add one line per finding to `review-method/findings.tsv` under
+`git rev-parse --git-common-dir`. The file stays out of the repository. Write the
+header line when the file is new. The columns, separated by tabs:
+
+- `date`, `branch`, `commit` (the commit that was reviewed);
+- `review`: `texts`, `full-1`, `full-2` and so on, `fixes`, or `review-only`;
+- `tag`: `Important`, `Nit`, `Pre-existing`, `Dropped` (shown wrong, without a
+  concrete case, or a Nit beyond "Cap the nits"), or `None`: one line with this tag
+  when the check kept and dropped nothing, so that each review has a line;
+- `found_by`: every run or agent that reported it, separated by commas:
+  `code-review-1` to `code-review-3`, `profile-<file name without .md>`,
+  `missed-agent` (step 3), `check-agent` (the third agent of step 3), `fixes-agent`
+  (step 5), `texts-agent`;
+- `summary`: the fault in a few words, with no tab.
+
+In step 8 too the log is written: it is outside the repository and the pull request,
+so it is not a change.
+
+When the user asks, or at the end of the tenth review in the log and of each tenth
+after it (a review is one value of `branch`, `commit` and `review`), say for each run
+or agent how many findings it reported that were kept (`Important`, `Nit` or
+`Pre-existing`), and how many of them no other run reported. Count the runs
+`code-review-1` to `code-review-3` together: they are the same review, run three
+times. A run that never finds a kept finding alone is a candidate to remove: tell the
+user, and do not remove it yourself.
 
 ## 4. Fix
 
